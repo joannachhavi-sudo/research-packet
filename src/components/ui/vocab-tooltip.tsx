@@ -108,8 +108,31 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
     }
   }, [isMobile, isVisible]);
 
+  const hideTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isHoveringTooltipRef = React.useRef(false);
+
+  const clearHideTimeout = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleHide = () => {
+    clearHideTimeout();
+    hideTimeoutRef.current = setTimeout(() => {
+      if (!isHoveringTooltipRef.current) {
+        setIsVisible(false);
+      }
+    }, 300);
+  };
+
   const handleMouseEnter = () => {
     if (!isMobile) {
+      clearHideTimeout();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       timeoutRef.current = setTimeout(() => {
         setIsVisible(true);
       }, 150);
@@ -121,10 +144,21 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      // Small delay before hiding to allow mouse to move to tooltip
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 100);
+      scheduleHide();
+    }
+  };
+
+  const handleTooltipMouseEnter = () => {
+    if (!isMobile) {
+      isHoveringTooltipRef.current = true;
+      clearHideTimeout();
+    }
+  };
+
+  const handleTooltipMouseLeave = () => {
+    if (!isMobile) {
+      isHoveringTooltipRef.current = false;
+      scheduleHide();
     }
   };
 
@@ -190,8 +224,8 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
         animation: 'tooltip-enter 0.2s ease-out',
       }}
-      onMouseEnter={() => !isMobile && setIsVisible(true)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleTooltipMouseEnter}
+      onMouseLeave={handleTooltipMouseLeave}
     >
       {/* Close button for mobile */}
       {isMobile && (

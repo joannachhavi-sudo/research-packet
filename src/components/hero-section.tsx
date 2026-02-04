@@ -28,7 +28,7 @@ export function HeroSection() {
           </div>
           
           <p className="text-xl md:text-2xl font-light leading-relaxed text-white/80 max-w-3xl mx-auto">
-            Explore Five Historical Perspectives
+            Explore Five Thinkers and Their Views
           </p>
         </div>
       </div>
