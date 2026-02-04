@@ -2,15 +2,27 @@
 // Used by VocabTooltip component throughout the application
 
 export const vocabularyDefinitions: Record<string, string> = {
-  // Thinker Card Tooltips
+  // Main Card Tooltips
   "radical": "Someone who wants big, revolutionary changes to society",
   "reformer": "A person who works to improve or change existing systems",
   "intersectional": "Fighting against multiple types of discrimination at once (like caste AND gender)",
   "constitutional": "Related to a country's fundamental laws and rights",
 
+  // General Terms (for main page)
+  "philosopher": "A person who studies big questions about life, knowledge, and reality",
+  "advocate": "Someone who publicly supports and fights for a cause or group of people",
+
+  // General Historical Terms
+  "enlightenment": "A historical movement (1700s) that valued reason, science, and individual rights",
+  "colonial rule": "When one country takes control of another country or region and governs it",
+  "independence movement": "An organized effort by people to free their country from foreign control",
+  "social reform": "Efforts to improve society by changing laws, customs, or practices",
+  "patriarchal": "A society or system where men hold most of the power",
+  "oppression": "Cruel or unjust treatment that keeps people from having freedom or rights",
+  "discrimination": "Treating people unfairly because of their identity (gender, race, caste, etc.)",
+
   // Mary Wollstonecraft Profile Tooltips
   "vindication": "A strong defense or justification of something",
-  "enlightenment": "A historical movement (1700s) that valued reason, science, and individual rights",
   "femme covert": "A legal rule where married women had no independent rights—everything belonged to their husbands",
   "natural rights": "Rights that all humans are believed to have just by being born, like freedom and equality",
   "rational": "Based on reason and logical thinking rather than emotion or tradition",
@@ -30,8 +42,10 @@ export const vocabularyDefinitions: Record<string, string> = {
   "virtue ethics": "Moral philosophy focused on developing good character rather than following rules",
   "teleology": "The study of purpose or design in nature—the idea that everything has a natural purpose",
   "natural slavery": "Aristotle's belief that some people are naturally suited to be slaves (a deeply flawed idea)",
+  "polymath": "A person with expertise in many different subjects",
 
   // Jyotirao Phule Profile Tooltips
+  "caste system": "A rigid social hierarchy in India that divides people into groups based on birth",
   "brahminical patriarchy": "A system where upper-caste men hold religious and social power",
   "satyashodhak": "Truth-seeker; a member of Phule's reform organization",
   "shudra": "The fourth group in traditional Indian caste hierarchy, considered \"lower caste\"",
@@ -46,6 +60,7 @@ export const vocabularyDefinitions: Record<string, string> = {
   "constitutional morality": "Following constitutional principles over traditional customs or religious rules",
   "annihilation of caste": "Ambedkar's vision of completely destroying the caste system",
   "separate electorate": "A political system where minorities vote separately to ensure their representation",
+  "jurist": "An expert in law; a legal scholar",
 };
 
 // Helper function to get definition (case-insensitive)

@@ -1,6 +1,10 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDefinition } from "@/data/vocabulary-definitions";
+import { hasExtendedDefinition } from "@/data/extended-definitions";
+import { ExtendedDefinitionModal } from "@/components/extended-definition-modal";
 
 interface VocabTooltipProps {
   term: string;
@@ -9,10 +13,17 @@ interface VocabTooltipProps {
   className?: string;
 }
 
+interface TooltipPosition {
+  top: number;
+  left: number;
+  position: 'above' | 'below';
+}
+
 export function VocabTooltip({ term, definition, children, className }: VocabTooltipProps) {
   const [isVisible, setIsVisible] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
-  const [position, setPosition] = React.useState<'top' | 'bottom'>('top');
+  const [tooltipPosition, setTooltipPosition] = React.useState<TooltipPosition | null>(null);
+  const [showExtendedModal, setShowExtendedModal] = React.useState(false);
   const triggerRef = React.useRef<HTMLSpanElement>(null);
   const tooltipRef = React.useRef<HTMLDivElement>(null);
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -20,6 +31,7 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
 
   // Get definition from data if not provided directly
   const tooltipDefinition = definition || getDefinition(term);
+  const hasExtended = hasExtendedDefinition(term);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -30,15 +42,40 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Calculate position based on available space
+  // Calculate fixed position when tooltip becomes visible
   React.useEffect(() => {
     if (isVisible && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const tooltipWidth = isMobile ? Math.min(window.innerWidth * 0.9, 400) : 400;
+      const tooltipHeight = 150; // Approximate height
+      const padding = 10;
+      
+      // Determine if tooltip should go above or below
       const spaceAbove = rect.top;
-      const tooltipHeight = 100; // Approximate height
-      setPosition(spaceAbove > tooltipHeight ? 'top' : 'bottom');
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const position: 'above' | 'below' = spaceAbove > tooltipHeight + padding ? 'above' : 'below';
+      
+      // Calculate horizontal position (centered on word)
+      let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+      
+      // Keep within viewport horizontally
+      if (left < padding) {
+        left = padding;
+      } else if (left + tooltipWidth > window.innerWidth - padding) {
+        left = window.innerWidth - tooltipWidth - padding;
+      }
+      
+      // Calculate vertical position
+      let top: number;
+      if (position === 'above') {
+        top = rect.top - padding;
+      } else {
+        top = rect.bottom + padding;
+      }
+      
+      setTooltipPosition({ top, left, position });
     }
-  }, [isVisible]);
+  }, [isVisible, isMobile]);
 
   // Handle click outside on mobile
   React.useEffect(() => {
@@ -75,7 +112,7 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
     if (!isMobile) {
       timeoutRef.current = setTimeout(() => {
         setIsVisible(true);
-      }, 300);
+      }, 150);
     }
   };
 
@@ -84,7 +121,10 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      setIsVisible(false);
+      // Small delay before hiding to allow mouse to move to tooltip
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 100);
     }
   };
 
@@ -94,6 +134,19 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
       e.stopPropagation();
       setIsVisible(!isVisible);
     }
+  };
+
+  const handleCloseTooltip = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsVisible(false);
+  };
+
+  const handleLearnMore = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsVisible(false);
+    setShowExtendedModal(true);
   };
 
   const handleFocus = () => {
@@ -114,90 +167,131 @@ export function VocabTooltip({ term, definition, children, className }: VocabToo
     return <span className={className}>{children}</span>;
   }
 
-  return (
-    <span
-      ref={triggerRef}
+  const tooltipContent = isVisible && tooltipPosition && (
+    <div
+      ref={tooltipRef}
+      role="tooltip"
       className={cn(
-        "relative inline cursor-help",
-        "border-b-[1.5px] border-dotted",
-        className
+        "fixed z-[9999]",
+        "p-4 px-5 rounded-lg",
+        "text-[15px] md:text-[15px] font-sans font-normal not-italic leading-relaxed",
+        "shadow-lg"
       )}
-      style={{ borderBottomColor: '#8B7355' }}
-      onMouseEnter={handleMouseEnter}
+      style={{
+        top: tooltipPosition.position === 'above' ? 'auto' : `${tooltipPosition.top}px`,
+        bottom: tooltipPosition.position === 'above' ? `${window.innerHeight - tooltipPosition.top}px` : 'auto',
+        left: `${tooltipPosition.left}px`,
+        width: isMobile ? 'calc(90vw)' : '400px',
+        minWidth: '280px',
+        maxWidth: isMobile ? '90vw' : '400px',
+        backgroundColor: '#FFF8E7',
+        border: '1px solid #8B7355',
+        color: '#2C2C2C',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+        animation: 'tooltip-enter 0.2s ease-out',
+      }}
+      onMouseEnter={() => !isMobile && setIsVisible(true)}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-describedby={isVisible ? `tooltip-${term}` : undefined}
-      aria-expanded={isVisible}
     >
-      {children}
-      
-      {isVisible && (
-        <span
-          ref={tooltipRef}
-          id={`tooltip-${term}`}
-          role="tooltip"
-          className={cn(
-            "absolute z-[9999] w-[280px] max-w-[calc(100vw-20px)]",
-            "p-3 px-4 rounded-md",
-            "text-sm font-sans font-normal not-italic leading-relaxed",
-            "shadow-lg",
-            "animate-in fade-in-0 zoom-in-95 duration-200",
-            position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
-            "left-1/2 -translate-x-1/2"
-          )}
-          style={{
-            backgroundColor: '#FFF8E7',
-            border: '1px solid #8B7355',
-            color: '#2C2C2C',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          }}
-          onMouseEnter={() => !isMobile && setIsVisible(true)}
-          onMouseLeave={handleMouseLeave}
+      {/* Close button for mobile */}
+      {isMobile && (
+        <button
+          onClick={handleCloseTooltip}
+          className="absolute top-2 right-2 p-1 rounded-full hover:bg-black/10 transition-colors"
+          aria-label="Close tooltip"
+          style={{ touchAction: 'manipulation' }}
         >
-          {/* Arrow */}
-          <span
-            className={cn(
-              "absolute left-1/2 -translate-x-1/2",
-              "w-0 h-0",
-              position === 'top' ? 'top-full' : 'bottom-full'
-            )}
-            style={{
-              borderLeft: '8px solid transparent',
-              borderRight: '8px solid transparent',
-              ...(position === 'top'
-                ? { borderTop: '8px solid #8B7355' }
-                : { borderBottom: '8px solid #8B7355' }
-              ),
-            }}
-          />
-          <span
-            className={cn(
-              "absolute left-1/2 -translate-x-1/2",
-              "w-0 h-0",
-              position === 'top' ? 'top-full -mt-[1px]' : 'bottom-full -mb-[1px]'
-            )}
-            style={{
-              borderLeft: '7px solid transparent',
-              borderRight: '7px solid transparent',
-              ...(position === 'top'
-                ? { borderTop: '7px solid #FFF8E7' }
-                : { borderBottom: '7px solid #FFF8E7' }
-              ),
-            }}
-          />
-          
-          <strong className="block mb-1 text-sm" style={{ color: '#8B7355' }}>
-            {term}
-          </strong>
-          <span className="block">{tooltipDefinition}</span>
-        </span>
+          <X className="w-5 h-5" style={{ color: '#8B7355' }} />
+        </button>
       )}
-    </span>
+      
+      {/* Arrow */}
+      <span
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2",
+          "w-0 h-0"
+        )}
+        style={{
+          ...(tooltipPosition.position === 'above' ? { bottom: '-8px' } : { top: '-8px' }),
+          borderLeft: '8px solid transparent',
+          borderRight: '8px solid transparent',
+          ...(tooltipPosition.position === 'above'
+            ? { borderTop: '8px solid #8B7355' }
+            : { borderBottom: '8px solid #8B7355' }
+          ),
+        }}
+      />
+      <span
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2",
+          "w-0 h-0"
+        )}
+        style={{
+          ...(tooltipPosition.position === 'above' ? { bottom: '-7px' } : { top: '-7px' }),
+          borderLeft: '7px solid transparent',
+          borderRight: '7px solid transparent',
+          ...(tooltipPosition.position === 'above'
+            ? { borderTop: '7px solid #FFF8E7' }
+            : { borderBottom: '7px solid #FFF8E7' }
+          ),
+        }}
+      />
+      
+      {/* Content */}
+      <div className={isMobile ? 'pr-6' : ''}>
+        <strong className="block mb-1 text-sm" style={{ color: '#8B7355' }}>
+          {term.charAt(0).toUpperCase() + term.slice(1)}
+        </strong>
+        <span className="block leading-relaxed">{tooltipDefinition}</span>
+        
+        {/* Learn More link */}
+        {hasExtended && (
+          <button
+            onClick={handleLearnMore}
+            className="flex items-center gap-1 mt-3 text-sm font-medium hover:underline transition-all cursor-pointer"
+            style={{ color: '#8B7355' }}
+          >
+            Learn More <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <span
+        ref={triggerRef}
+        className={cn(
+          "relative inline cursor-help",
+          "border-b-[1.5px] border-dotted",
+          className
+        )}
+        style={{ borderBottomColor: '#8B7355' }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-describedby={isVisible ? `tooltip-${term}` : undefined}
+        aria-expanded={isVisible}
+      >
+        {children}
+      </span>
+      
+      {/* Render tooltip in portal for fixed positioning */}
+      {typeof document !== 'undefined' && ReactDOM.createPortal(tooltipContent, document.body)}
+      
+      {/* Extended definition modal */}
+      <ExtendedDefinitionModal
+        term={term}
+        isOpen={showExtendedModal}
+        onClose={() => setShowExtendedModal(false)}
+      />
+    </>
   );
 }
 
