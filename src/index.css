@@ -133,3 +133,15 @@ Deep blues, greens, and gold for scholarly elegance. All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Tooltip animation */
+@keyframes tooltip-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

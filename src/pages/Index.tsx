@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FacilitatorForm } from "@/components/facilitator-form";
+import { TooltipInstructionBanner } from "@/components/tooltip-instruction-banner";
 import { Users, Plus, Lock } from "lucide-react";
 import { useState } from "react";
 
@@ -133,6 +134,9 @@ const Index = () => {
               Choose one to research deeply for your upcoming debate.
             </p>
           </div>
+          
+          {/* Tooltip instruction banner */}
+          <TooltipInstructionBanner />
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 max-w-7xl mx-auto">
             {thinkers.map((thinker) => (
